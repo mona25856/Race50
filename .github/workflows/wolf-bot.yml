@@ -1,0 +1,119 @@
+name: WOLF Malook Bot
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */4 * * *"   # كل 4 ساعات
+
+concurrency:
+  group: wolf-bot
+  cancel-in-progress: true
+
+jobs:
+  wolf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.20.2"
+
+      - name: Install dependencies
+        run: |
+          echo "📦 Installing dependencies..."
+          npm install
+          echo "✅ Dependencies installed"
+
+      - name: Verify WOLF_TOKENS_PAT
+        env:
+          WOLF_TOKENS_PAT: ${{ secrets.WOLF_TOKENS_PAT }}
+        run: |
+          echo "========================================"
+          echo "🔐 Verifying WOLF_TOKENS_PAT"
+          echo "========================================"
+
+          if [ -z "$WOLF_TOKENS_PAT" ]; then
+            echo "❌ WOLF_TOKENS_PAT is NOT available"
+            exit 1
+          fi
+          echo "✅ WOLF_TOKENS_PAT is available"
+
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: token $WOLF_TOKENS_PAT" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "https://api.github.com/repos/Ana72932/Too/contents/token.json")
+
+          if [ "$STATUS" != "200" ]; then
+            echo "❌ Failed to access Too/token.json: HTTP $STATUS"
+            exit 1
+          fi
+          echo "✅ Access to Too/token.json confirmed"
+
+      - name: Start WOLF Malook Bot
+        env:
+          WOLF_TOKENS_PAT: ${{ secrets.WOLF_TOKENS_PAT }}
+        run: |
+          echo "🐺 WOLF MALOOK BOT STARTING"
+          echo "🕐 Start time: $(date)"
+          echo "========================================"
+
+          RUN_SECONDS=21000  # 5 ساعات و 50 دقيقة (لضمان بقاء البوت حتى نهاية 5:41)
+          START_TIME=$(date +%s)
+          END_TIME=$((START_TIME + RUN_SECONDS))
+
+          cleanup() {
+            echo ""
+            echo "🧹 WOLF CLEANUP"
+            echo "🛑 Stopping WOLF..."
+            if [ -n "$BOT_PID" ] && kill -0 "$BOT_PID" 2>/dev/null; then
+              kill -TERM -- "-$BOT_PID" 2>/dev/null || true
+              sleep 8
+              if kill -0 "$BOT_PID" 2>/dev/null; then
+                kill -KILL -- "-$BOT_PID" 2>/dev/null || true
+              fi
+            fi
+            echo "✅ WOLF cleanup completed"
+          }
+
+          trap cleanup EXIT INT TERM
+
+          echo "🚀 STARTING WOLF"
+          setsid npm start &
+          BOT_PID=$!
+          echo "🐺 WOLF PID: $BOT_PID"
+
+          while true; do
+            NOW=$(date +%s)
+
+            if [ "$NOW" -ge "$END_TIME" ]; then
+              echo "⏰ RUN TIME COMPLETED at $(date)"
+              exit 0
+            fi
+
+            if ! kill -0 "$BOT_PID" 2>/dev/null; then
+              echo "⚠️ WOLF STOPPED UNEXPECTEDLY"
+              wait "$BOT_PID" 2>/dev/null || true
+              exit 1
+            fi
+
+            ELAPSED=$((NOW - START_TIME))
+            H=$((ELAPSED / 3600))
+            M=$(((ELAPSED % 3600) / 60))
+            S=$((ELAPSED % 60))
+            echo "🐺 WOLF is running | ⏱️ ${H}h ${M}m ${S}s | $(date)"
+            sleep 30
+          done
+
+      - name: Final Cleanup
+        if: always()
+        run: |
+          echo "🧹 FINAL CLEANUP"
+          pkill -TERM -f "node check-wolf.js" 2>/dev/null || true
+          sleep 2
+          pkill -KILL -f "node check-wolf.js" 2>/dev/null || true
+          echo "✅ Final cleanup completed"
