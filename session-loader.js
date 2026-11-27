@@ -1,8 +1,8 @@
 // session-loader.js
 const GITHUB_TOKEN = process.env.WOLF_TOKENS_PAT || '';
-const GITHUB_OWNER = 'Ana72932';
-const GITHUB_REPO = 'Too';
-const GITHUB_FILE = 'token.json';
+const GITHUB_OWNER = 'Ean72932';
+const GITHUB_REPO = 'Ono';
+const GITHUB_FILE = '1o.json';
 const GITHUB_BRANCH = 'main';
 
 // ============================================================
