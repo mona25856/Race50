@@ -2,14 +2,14 @@
 const GITHUB_TOKEN = process.env.WOLF_TOKENS_PAT || '';
 
 // بيانات الحساب الأول (المنشئ)
-const HOST_OWNER = 'Ana72932';
-const HOST_REPO = 'Too';
-const HOST_FILE = 'token.json';
+const HOST_OWNER = 'Ean72932';
+const HOST_REPO = 'too';
+const HOST_FILE = '2t.json';
 
 // بيانات الحساب الثاني (الضيف)
-const GUEST_OWNER = 'Ana72932';
+const GUEST_OWNER = 'Ean72932';
 const GUEST_REPO = 'Ono';
-const GUEST_FILE = 'tokens.json';
+const GUEST_FILE = '1o.json';
 
 const GITHUB_BRANCH = 'main';
 
